@@ -33,6 +33,9 @@ import Foundation
 // Downloads song snippets, and stores in local file.
 // Allows cancel, pause, resume download.
 class DownloadService {
+  
+  // This dictionary simply mainatains a mapping between a URL and its active Download
+  var activeDownloads: [URL: Download] = [:]
 
   // SearchViewController creates downloadsSession
   var downloadsSession: URLSession!
@@ -40,7 +43,16 @@ class DownloadService {
   // MARK: - Download methods called by TrackCell delegate methods
 
   func startDownload(_ track: Track) {
-    // TODO
+    // Initialize download track
+    let download = Download(track: track)
+    // Using your new session obejct, you create a URLSessionDownloadTask with the track's preview URL, and set it to the task property of the Download.
+    download.task = downloadsSession.downloadTask(with: track.previewURL)
+    // start the download task by calling resume() on it.
+    download.task!.resume()
+    // Indicate that the download is in progress.
+    download.isDownloading = true
+    // You map the download URL to its Download in the activeDownload dictionary.
+    activeDownloads[download.track.previewURL] = download
   }
   // TODO: previewURL is http://a902.phobos.apple.com/...
   // why doesn't ATS prevent this download?

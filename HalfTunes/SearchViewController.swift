@@ -51,9 +51,17 @@ class SearchViewController: UIViewController {
     return documentsPath.appendingPathComponent(url.lastPathComponent)
   }
 
+  // lazy creations of this session let you delay the creation of the session until after the view controller initialized, which allows you to pass self as the delegate parameter to the session initializer.
+  // Initialize a separate session with a dfault configuration, and specify a delegate, which lets you receive URLSession events via delegte calls. This will be useful for monitoring the progress of the task.
+  lazy var downloadsSession: URLSession = {
+    let configuration = URLSessionConfiguration.default
+    return URLSession(configuration: configuration, delegate: self, delegateQueue: nil) //Queue is nil cause the session to create a serial operation queue to perform all calls to delegate methods and completion handlers.
+  }()
+
   override func viewDidLoad() {
     super.viewDidLoad()
     tableView.tableFooterView = UIView()
+    downloadService.downloadsSession = downloadsSession
   }
 
   func playDownload(_ track: Track) {

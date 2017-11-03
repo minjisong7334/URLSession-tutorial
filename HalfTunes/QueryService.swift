@@ -39,12 +39,50 @@ class QueryService {
   var tracks: [Track] = []
   var errorMessage = ""
 
-  // TODO
+  // created URLsession with default configuration
+  let defaultSession = URLSession(configuration: .default)
+  // when a user perform search, will make an HTTP GET reqeust to iTunes Search web service
+  // The data task will re-initialized each time depends on the new string
+  var dataTask: URLSessionDataTask?
 
   func getSearchResults(searchTerm: String, completion: @escaping QueryResult) {
-    // TODO
-    DispatchQueue.main.async {
-      completion(self.tracks, self.errorMessage)
+    // For new query cancle the old task
+    dataTask?.cancel()
+    
+    // Create URLComponenets Object with iTunes search base URL
+    if var urlComponents = URLComponents(string: "https://itunes.apple.com/search") {
+      // Then set the its query string
+      // This ensures that chracters in the search string are properly escaped
+      urlComponents.query = "media=music&entity=song&term=\(searchTerm)"
+      // url property of urlComponenets might be null, so you optional-bind it to url
+      guard let url = urlComponents.url else { return }
+      
+      // From the session you created, you initialize a URLSessionDataTask with the query url and a completion handler to call when the data task completes.
+      // default request method is GET. If you want a data take to POST,PUT or DELETE, create a URLRequest with the url, set the request's HTTPMethod property appropriately, then create a data task with the URLRequest, instead of with the URL
+//      ex)
+//      var urlRequest = URLRequest.init(url: url)
+//      urlRequest.httpMethod = "POST"
+//      dataTask = defaultSession.dataTask(with: urlRequest)
+      
+      dataTask = defaultSession.dataTask(with: url) {data, response, error in
+        defer { self.dataTask = nil }
+        
+        // If the HTTP request is successful, you call the helper method updateSearchResults(_:), which parses the reponse data into the tracks array.
+        if let error = error {
+          self.errorMessage += "DataTask error: " + error.localizedDescription + "\n"
+        } else if let data = data,
+        let response = response as? HTTPURLResponse,
+          response.statusCode == 200 {
+          self.updateSearchResults(data)
+
+          // You switch to the main queue to pass tracks to the completion handler in SearchVC+SearchBarDelegate.swift
+          DispatchQueue.main.async {
+            completion(self.tracks, self.errorMessage)
+          }
+        }
+      }
+      // All tasks start in a suspended state by default, calling resume() starts the data task. 
+      dataTask?.resume()
     }
   }
 

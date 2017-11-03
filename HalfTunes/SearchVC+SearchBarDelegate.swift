@@ -40,9 +40,11 @@ extension SearchViewController: UISearchBarDelegate {
   func searchBarSearchButtonClicked(_ searchBar: UISearchBar) {
     dismissKeyboard()
     guard let searchText = searchBar.text, !searchText.isEmpty else { return }
-    UIApplication.shared.isNetworkActivityIndicatorVisible = true
+    // enables the network activity indicator
+    UIApplication.shared.isNetworkActivityIndicatorVisible = true // Letting users know the loading the list is done or on going
+    // Call this from QueryService.swift
     queryService.getSearchResults(searchTerm: searchText) { results, errorMessage in
-      UIApplication.shared.isNetworkActivityIndicatorVisible = false
+    UIApplication.shared.isNetworkActivityIndicatorVisible = false // Letting users know the loading the list is done or on going
       if let results = results {
         self.searchResults = results
         self.tableView.reloadData()
